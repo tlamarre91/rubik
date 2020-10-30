@@ -1,0 +1,10 @@
+{
+  "name": "rubik",
+  "version": "0.0.1",
+  "description": "Simple TypeScript module for playing with the Rubik's Cube",
+  "main": "index.js",
+  "repository": "git@github.com:tlamarre91/rubik.git",
+  "author": "Tom LaMarre <tlamarre91@gmail.com>",
+  "license": "GPL",
+  "private": false
+}
