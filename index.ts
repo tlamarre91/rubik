@@ -6,9 +6,8 @@ export enum Face {
   Top, Front, Back, Bottom, Left, Right
 }
 
-import {
-  Predicates
-} from "./examples";
+import * as examples from "./examples";
+export { examples };
 
 export const RUBIKS_MOVES: Move[] = [
   Move.F, Move.Fi,
@@ -1049,12 +1048,6 @@ for (let i = 0; i < 6; i += 1) {
   neighborFinder.push([neighbors[0], neighbors[1], neighbors[2], neighbors[3]]);
 }
 
-
-
 if (require.main == module) {
-  //console.log(indexFinder.edges);
-  //console.log(neighborFinder);
-  //testHillclimb();
-  bfExperiment2();
-  //randomCubeExperiment1();
+  examples.Experiments.bf2();
 }

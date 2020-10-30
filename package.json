@@ -6,5 +6,8 @@
   "repository": "git@github.com:tlamarre91/rubik.git",
   "author": "Tom LaMarre <tlamarre91@gmail.com>",
   "license": "GPL",
-  "private": false
+  "private": false,
+  "devDependencies": {
+    "@types/node": "^14.14.6"
+  }
 }
