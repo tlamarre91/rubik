@@ -1,9 +1,16 @@
 import * as examples from "./examples";
+
+import {
+  Permutation,
+  QT_PERMUTATIONS
+} from "./permutation";
+
 import {
   Move,
   Face,
   Color
 } from "./types";
+
 export {
   examples,
   Move,
@@ -11,6 +18,9 @@ export {
   Color
 };
 
+/**
+ * names of quarter-turn Rubik's Cube moves
+ */
 export const QT_MOVES: Move[] = [
   Move.F, Move.Fi,
   Move.R, Move.Ri,
@@ -29,7 +39,7 @@ export const MOVE_STRINGS: string[] = [
   "D", "Di",
 ];
 
-export const RUBIKS_INVERSES: Map<Move, Move> = new Map([
+export const QT_INVERSES: Map<Move, Move> = new Map([
   [Move.F, Move.Fi],
   [Move.Fi, Move.F],
   [Move.R, Move.Ri],
@@ -48,7 +58,7 @@ export const RUBIKS_INVERSES: Map<Move, Move> = new Map([
 export function conjugate(seq: Move[], move: Move): Move[] {
   const newSeq = [move];
   newSeq.push(... seq);
-  newSeq.push(RUBIKS_INVERSES.get(move)!);
+  newSeq.push(QT_INVERSES.get(move)!);
   return newSeq;
 }
 
@@ -219,7 +229,7 @@ export class CubeState {
   popMove() {
     const move = this.moveHistory.pop();
     if (move != undefined) {
-      const inv = RUBIKS_INVERSES.get(move);
+      const inv = QT_INVERSES.get(move);
       if (inv != undefined) {
         this.performMove(inv);
       }
@@ -279,7 +289,7 @@ export class CubeState {
 
   randomMove() {
     const index = Math.floor(Math.random() * 12);
-    this.pushMove(RUBIKS_MOVES[index]);
+    this.pushMove(QT_MOVES[index]);
   }
 
   projectFace(face: Face): NineColorTuple {
@@ -685,8 +695,8 @@ export class Solver {
     currentBranch: Move[] = [],
   ): Iterator<[CubeState, Move[], boolean]> {
     const last = currentBranch.length > 0 ? currentBranch[currentBranch.length - 1] : -1;
-    for (let i = 0; i < RUBIKS_MOVES.length; i += 1) {
-      //if (i != RUBIKS_INVERSES.get(last)) {
+    for (let i = 0; i < QT_MOVES.length; i += 1) {
+      //if (i != QT_INVERSES.get(last)) {
       if (true) {
         const newBranch = currentBranch.concat(i);
         this.cubeState.pushMove(i);
@@ -735,7 +745,7 @@ export class Solver {
     depth: number = this.bruteForceDepth,
     currentBranch: Move[] = []
   ): Iterator<[CubeState, Move[], boolean]> {
-    const shuffledMoves = RUBIKS_MOVES.slice();
+    const shuffledMoves = QT_MOVES.slice();
     let j, x, i = 0;
     for (i = shuffledMoves.length - 1; i > 0; i -= 1) {
       j = Math.floor(Math.random() * (i + 1));
@@ -745,7 +755,7 @@ export class Solver {
     }
     const last = currentBranch[currentBranch.length - 1];
     for (let i = 0; i < shuffledMoves.length; i += 1) {
-      if (shuffledMoves[i] != RUBIKS_INVERSES.get(last)) {
+      if (shuffledMoves[i] != QT_INVERSES.get(last)) {
         const newBranch = currentBranch.concat(shuffledMoves[i]);
         this.cubeState.pushMove(shuffledMoves[i]);
         const result = predicate(this.cubeState);
