@@ -783,7 +783,7 @@ export const neighborFinder: [number, number, number, number][] = [
  * initialize indexFinder and neighborFinder
  */
 for (let i = 0; i < 6; i += 1) {
-  const face = SolvedCube.faces[i];
+  const face = SolvedCube.faceColors[i];
   const edgeFacetsMatching: [number, number][] = [];
   const neighbors: Color[] = [];
   SolvedCube.edges.forEach((edge, edgeIndex) => {
