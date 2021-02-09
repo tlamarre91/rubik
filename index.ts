@@ -63,10 +63,10 @@ export function conjugate(seq: Move[], move: Move): Move[] {
 }
 
 
-export type NineColorTuple = [
-  Color, Color, Color,
-  Color, Color, Color,
-  Color, Color, Color
+export type FaceTuple = [
+  number, number, number,
+  number, number, number,
+  number, number, number
 ]
 
 export const COLORS = [
@@ -95,9 +95,9 @@ export function colorChar(color: Color): string {
   }
 }
 
-export type Edge = [Color, Color];
+export type Edge = [number, number];
 
-export type Corner = [Color, Color, Color];
+export type Corner = [number, number, number];
 
 export interface CubeStateParams {
   trackMoveHistory: boolean;
@@ -108,61 +108,16 @@ export class CubeState {
   moveHistory: Move[] = [];
   trackMoveHistory: boolean;
   moveHistorySize: number;
-  faces: [Color, Color, Color, Color, Color, Color];
-  corners: [
-    Corner, // ULF
-    Corner, // ULB
-    Corner, // URB
-    Corner, // URF
-    Corner, // DLF
-    Corner, // DLB
-    Corner, // DRB
-    Corner  // DRF
-  ];
+  faceColors: Color[];
+  corners: Corner[];
+  edges: Edge[];
 
-  edges: [
-    Edge, Edge, Edge, Edge, // front top, right, bottom, left
-    Edge, Edge, Edge, Edge, // middle top-left, top-right, bottom-right, bottom-left
-    Edge, Edge, Edge, Edge // back top, right, bottom, left
-  ];
-
-  constructor(faces: Color[], corners: Corner[], edges: Edge[], params: Partial<CubeStateParams> = { }) {
+  constructor(faceColors: Color[], corners: Corner[], edges: Edge[], params: Partial<CubeStateParams> = { }) {
     this.moveHistorySize = params.moveHistorySize ?? 1000;
     this.trackMoveHistory = params.trackMoveHistory ?? true;
-    this.faces = [
-      faces[0],
-      faces[1],
-      faces[2],
-      faces[3],
-      faces[4],
-      faces[5]
-    ];
-
-    this.corners = [
-      [corners[0][0], corners[0][1], corners[0][2]],
-      [corners[1][0], corners[1][1], corners[1][2]],
-      [corners[2][0], corners[2][1], corners[2][2]],
-      [corners[3][0], corners[3][1], corners[3][2]],
-      [corners[4][0], corners[4][1], corners[4][2]],
-      [corners[5][0], corners[5][1], corners[5][2]],
-      [corners[6][0], corners[6][1], corners[6][2]],
-      [corners[7][0], corners[7][1], corners[7][2]],
-    ];
-
-    this.edges = [
-      [edges[0][0], edges[0][1]],
-      [edges[1][0], edges[1][1]],
-      [edges[2][0], edges[2][1]],
-      [edges[3][0], edges[3][1]],
-      [edges[4][0], edges[4][1]],
-      [edges[5][0], edges[5][1]],
-      [edges[6][0], edges[6][1]],
-      [edges[7][0], edges[7][1]],
-      [edges[8][0], edges[8][1]],
-      [edges[9][0], edges[9][1]],
-      [edges[10][0], edges[10][1]],
-      [edges[11][0], edges[11][1]]
-    ];
+    this.faceColors = faceColors.slice();
+    this.corners = corners.slice();
+    this.edges = edges.slice();
 
     if (! this.validate()) {
       throw new Error("invalid initial cube state");
@@ -200,15 +155,16 @@ export class CubeState {
   }
 
   countColors(): number[] {
+    // TODO: take this out; it'll be obsoleted by the index-storing refactor
     const counts = [0, 0, 0, 0, 0, 0];
-    this.faces.forEach(color => counts[color] += 1);
+    this.faceColors.forEach(color => counts[color] += 1);
     this.corners.forEach(corner => corner.forEach(color => counts[color] += 1));
     this.edges.forEach(edge => edge.forEach(color => counts[color] += 1));
     return counts;
   }
 
   copy(): CubeState {
-    return new CubeState(this.faces, this.corners, this.edges);
+    return new CubeState(this.faceColors, this.corners, this.edges);
   }
 
   pushMove(move: Move) {
@@ -248,37 +204,12 @@ export class CubeState {
   }
 
   permutate(permutation: Permutation) {
-    const preCorners = [
-      this.corners[0],
-      this.corners[1],
-      this.corners[2],
-      this.corners[3],
-      this.corners[4],
-      this.corners[5],
-      this.corners[6],
-      this.corners[7],
-    ];
-
-    const preEdges = [
-      this.edges[0],
-      this.edges[1],
-      this.edges[2],
-      this.edges[3],
-      this.edges[4],
-      this.edges[5],
-      this.edges[6],
-      this.edges[7],
-      this.edges[8],
-      this.edges[9],
-      this.edges[10],
-      this.edges[11],
-    ]
-
+    const preCorners = this.corners.slice();
+    const preEdges = this.edges.slice();
     for (let [from, [to, rotation]] of permutation.corners) {
       this.corners[to] = preCorners[from];
       this.rotateCorner(to, rotation);
     }
-
     for (let [from, [to, swap]] of permutation.edges) {
       this.edges[to] = preEdges[from];
       if (swap != 0) {
@@ -292,7 +223,8 @@ export class CubeState {
     this.pushMove(QT_MOVES[index]);
   }
 
-  projectFace(face: Face): NineColorTuple {
+  projectFace(face: Face): FaceTuple {
+    // TODO: take this out; it'll be obsoleted by the index-storing refactor
     switch (face) {
       case Face.Front:
         return [
@@ -300,7 +232,7 @@ export class CubeState {
           this.edges[0][0],
           this.corners[3][1],
           this.edges[3][0],
-          this.faces[0],
+          this.faceColors[0],
           this.edges[1][0],
           this.corners[4][1],
           this.edges[2][0],
@@ -312,7 +244,7 @@ export class CubeState {
           this.edges[8][0],
           this.corners[2][2],
           this.edges[4][1],
-          this.faces[1],
+          this.faceColors[1],
           this.edges[5][0],
           this.corners[0][2],
           this.edges[0][1],
@@ -324,7 +256,7 @@ export class CubeState {
           this.edges[10][1],
           this.corners[6][1],
           this.edges[11][1],
-          this.faces[2],
+          this.faceColors[2],
           this.edges[9][1],
           this.corners[1][1],
           this.edges[8][1],
@@ -336,7 +268,7 @@ export class CubeState {
           this.edges[2][1],
           this.corners[7][2],
           this.edges[7][0],
-          this.faces[3],
+          this.faceColors[3],
           this.edges[6][1],
           this.corners[5][2],
           this.edges[10][0],
@@ -348,7 +280,7 @@ export class CubeState {
           this.edges[4][0],
           this.corners[0][1],
           this.edges[11][0],
-          this.faces[4],
+          this.faceColors[4],
           this.edges[3][1],
           this.corners[5][1],
           this.edges[7][1],
@@ -360,7 +292,7 @@ export class CubeState {
           this.edges[5][1],
           this.corners[2][1],
           this.edges[1][1],
-          this.faces[5],
+          this.faceColors[5],
           this.edges[9][0],
           this.corners[7][1],
           this.edges[6][0],
@@ -370,6 +302,7 @@ export class CubeState {
   }
 
   findEdges(color: Color): [number, number][] {
+    // TODO: use this.faceColors. not priority because this function is actually never called
     const indices: [number, number][] = [];
     this.edges.forEach((edge, index) => {
       if (edge[0] == color) {
@@ -385,6 +318,7 @@ export class CubeState {
   }
 
   findCorners(color: Color): [number, number][] {
+    // TODO: use this.faceColors. not priority because this function is actually never called
     const indices: [number, number][] = [];
     this.corners.forEach((corner, index) => {
       if (corner[0] == color) {
@@ -413,15 +347,10 @@ export class CubeState {
     return d1 + d2;
   }
 
-  private static _hammingDistanceHelper(list: Color[][], otherList: Color[][]): number {
+  private static _hammingDistanceHelper(cubeletList: number[][], otherList: number[][]): number {
     let d = 0;
-    list.forEach((cubelet, cIndex) => {
-      //cubelet.forEach((color, fIndex) => {
-      //  if (color != otherList[cIndex][fIndex]) {
-      //    d += 1;
-      //  }
-      //});
-      const match = cubelet.every((color, fIndex) => color == otherList[cIndex][fIndex]);
+    cubeletList.forEach((cubelet, cubeletIndex) => {
+      const match = cubelet.every((facet, facetIndex) => facet == otherList[cubeletIndex][facetIndex]);
       if (! match) {
         d += 1;
       }
@@ -431,6 +360,7 @@ export class CubeState {
   }
 
   hash(): string {
+    // TODO: refactor; it'll be obsoleted by the index-storing refactor
     const s = [
       //this.faces.join(""),
       this.corners.map(x => x.join("")).join(""),
@@ -490,7 +420,7 @@ export class CubeState {
   }
 };
 
-const solvedFaces = [
+const canonicalFaceColors = [
   Color.Red,
   Color.Yellow,
   Color.Orange,
@@ -593,7 +523,7 @@ const solvedEdges: Edge[] = [
   ],
 ];
 
-export const SolvedCube: CubeState = new CubeState(solvedFaces, solvedCorners, solvedEdges);
+export const SolvedCube: CubeState = new CubeState(canonicalFaceColors, solvedCorners, solvedEdges);
 
 export interface SolverParams {
   cubeState: CubeState;
